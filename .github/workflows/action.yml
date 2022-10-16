@@ -1,60 +1,58 @@
-name: Build & Deploy
-on:
-  push:
-    branches:
-      - master
+name: 'Github Release Changelog Generator'
+author: 'Kenny Wong'
+description: 'Returns the commit difference count between two git references.'
+inputs:
+  token:
+    description: 'Your GITHUB_TOKEN'
+    default: ${{ github.token }}
+    required: false
+  filter:
+    description: 'Regular expression filtering'
+    default: ''
+    required: false
+  filter-author:
+    description: 'Regular expression filtering'
+    default: ''
+    required: false
+  head-ref:
+    description: 'The name of the head reference'
+    default: ''
+    required: false
+  gh-pages:
+    description: 'Specify the branch name to get the hash from'
+    default: 'gh-pages'
+    required: false
+  base-ref:
+    description: 'The name of the base reference'
+    default: ''
+    required: false
+  original-markdown:
+    description: 'Output clean markdown content.'
+    default: 'true'
+    required: false
+  path:
+    description: 'Only commits containing this file path will be returned..'
+    default: ''
+    required: false
 
-env:
-  SKIP_PREFLIGHT_CHECK: true
-jobs:
-  build-deploy:
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - run: npm install
-    - run: npm run build
-    - run: npm run doc
-    - run: npm run map
-
-    - name: Create Tag
-      id: create_tag
-      uses: jaywcjlove/create-tag-action@v1.1.8
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        package-path: ./package.json
-
-    - name: Generate Changelog
-      id: changelog
-      uses: jaywcjlove/changelog-generator@v1.3.9
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        head-ref: ${{steps.create_tag.outputs.version}}
-        filter-author: (jaywcjlove|小弟调调™|dependabot\[bot\]|Renovate Bot)
-        filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
-
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/master'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
-
-    - name: Create Release
-      uses: ncipollo/release-action@v1
-      if: steps.create_tag.outputs.successful
-      with:
-        name: ${{ steps.create_tag.outputs.version }}
-        tag: ${{ steps.create_tag.outputs.version }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        body: |
-          [![](https://img.shields.io/badge/Open%20in-unpkg-blue)](https://uiwjs.github.io/npm-unpkg/#/pkg/@uiw/react-md-editor@${{steps.changelog.outputs.version}}/file/README.md)
-
-          ```bash
-          npm i @uiw/react-md-editor@${{steps.changelog.outputs.version}}
-          ```
-          ${{ steps.changelog.outputs.compareurl }}
-          ${{ steps.changelog.outputs.changelog }}
+outputs:
+  version:
+    description: 'The version number of the tag created. example: 1.0.0'
+  changelog:
+    description: 'Markdown formatted changelog'
+  compareurl:
+    description: 'Comparing two branches to see what’s changed or to start a new pull request.'
+  tag:
+    description: 'Tag name.'
+  branch:
+    description: 'Branch name.'
+  gh-pages-hash:
+    description: 'Specify the branch name to get the hash from.'
+  gh-pages-short-hash:
+    description: 'Specify the branch name to get the short-hash from.'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+branding:
+  icon: 'list'
+  color: 'blue'
