@@ -1,22 +1,29 @@
-# Trigger the workflow on milestone events
-on: 
-  milestone:
-    types: [closed]
-name: Milestone Closure
-jobs:
-  create-release-notes:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Create Release Notes
-      uses: Cossey/release-notes-generator-action@v2.1.4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OUTPUT_FOLDER: temp_release_notes
-
-    changelog:
-   sections:
-   - title: "Enhancements"
-    labels: ["new"]
-   - title: "Bugs"
-    labels: ["fix"]
+- name: Generate changelog
+  id: changelog
+  uses: metcalfc/changelog-generator@v3.0.0
+  with:
+    myToken: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Get the changelog
+  run: |
+    cat << "EOF"
+    ${{ steps.changelog.outputs.changelog }}
+    EOF
+    
+          - name: Modify the changelog
+        id: modified
+        run: |
+          set -o noglob
+          log=$(cat << "EOF" | grep -v Bumping | tac
+          ${{ steps.changelog.outputs.changelog }}
+          EOF
+          )
+          log="${log//'%'/'%25'}"
+          log="${log//$'\n'/'%0A'}"
+          log="${log//$'\r'/'%0D'}"
+          echo "::set-output name=modified::$log"
+      - name: Print the modified changelog
+        run: |
+          cat << "EOF"
+          ${{ steps.modified.outputs.modified }}
+          EOF
