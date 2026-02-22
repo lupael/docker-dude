@@ -26,7 +26,7 @@ docker run \
   lupael/docker-dude
 ```
 
-and your Dude is ready.
+Dude is ready.
 
 Ports published:
 
